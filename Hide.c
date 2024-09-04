@@ -20,20 +20,30 @@ void HideProcedure(char *messageFileName, char *coverFileName, char *outputFileN
         printf("The cover file is a valid bitmap image.\n");
     }
 
+    //TODO implement random option which uses an unsigned int and contains random number
+    //messageSize = sizeof(unsigned int)
+    //message = random()
     pMessageFile = FileRead(messageFileName, &messageSize);
-    pOutputFile = FileWrite(outputFileName);
 
-    LoadPaletteHeader();
-
+    //TODO remove
     printf("Cover Size = %u\n", coverSize);
     printf("Message Size = %u\n", messageSize);
 
     CoverLimitCheck(bitsToHide);
 
+    pOutputFile = FileWrite(outputFileName);
+
+    LoadPaletteHeader();
+
+    BubbleSortLuminance(palette);
+
     EmbedLengthOfFile(bitsToHide);
 
-    int messageBitCounter = 0,  remainderBits = 0;
-    unsigned char coverByte, messageByte, tempByte, bitMask;
+    int bitCounter = 0,  remainderBits = 0;
+    unsigned char coverByte, messageByte, lumIndex, tempByte, bitMask;
+    int cursor = ftell(pCoverFile);
+    int test = ceil((messageSize * 8)/(unsigned int)bitsToHide);
+    printf("TEST = %d\n", test);
 
     bool padding = PaddingCheck(coverWidth);
     //TODO: remove
@@ -45,147 +55,206 @@ void HideProcedure(char *messageFileName, char *coverFileName, char *outputFileN
 
     while(ftell(pCoverFile) < coverSize) {
 
-        fread(&coverByte, 1, 1, pCoverFile);
-        if(ftell(pMessageFile) < 9)
-            printf("New CoverByte = %u\n", coverByte);
-
-        if(padding && (ftell(pCoverFile) % (coverWidth + 1) == 0)) {
-
-            fwrite(&coverByte, 1, 1, pOutputFile);
-
+        if(padding && (ftell(pCoverFile)-cursor % (coverWidth+1) == 0)) {
+            //TODO FIX PADDING
+            int paddingNum = 4 - (coverWidth % 4);
+            fread(&coverByte, 1, 1, pCoverFile);
+            fwrite(&coverByte, 1, paddingNum, pOutputFile);
+            fflush(pOutputFile);
         }
 
-        if(ftell(pMessageFile) < messageSize) {
+        fread(&coverByte, 1, 1, pCoverFile);
+        lumIndex = GetLuminanceIndex(palette, coverByte);
+        if((ftell(pMessageFile) > (messageSize - 3)) && (ftell(pMessageFile) != (messageSize))) {
+            printf("New CoverByte IN EMBED LOOP= %u\n", coverByte);
+            printf("New lumIndex IN EMBED LOOP= %u\n", lumIndex);
+        }
 
-            if((messageBitCounter + bitsToHide) > 8) {
+        if((ftell(pCoverFile) - cursor) <= test) {
+
+            if((bitCounter + bitsToHide) > 8) {
                 
-                messageBitCounter += bitsToHide;
+                tempByte = 0;
+                bitCounter += bitsToHide;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("MBC = %d\n", messageBitCounter);
-                remainderBits = messageBitCounter % 8;
+                if(ftell(pMessageFile) > (messageSize - 3))
+                    printf("MBC = %d\n", bitCounter);
+                remainderBits = bitCounter % 8;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
+                if(ftell(pMessageFile) > (messageSize - 3))
                     printf("remainderBits = %d\n", remainderBits);
                 //bitmask for lsb wipe
                 bitMask = ~GetBitMask(bitsToHide);
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("Bitmask4C = %u\n", bitMask);
-                //wipe lsbs of cover
-                coverByte &= bitMask;
+                if(ftell(pMessageFile) > (messageSize - 3))
+                    printf("Bitmask4LI = %u\n", bitMask);
+                //wipe lsbs of lumIndex
+                lumIndex &= bitMask;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("CoverByte & bitMask = %u\n", coverByte);
+                if(ftell(pMessageFile) > (messageSize - 3))
+                    printf("lumIndex & bitMask = %u\n", lumIndex);
                 //shift to correct pos
                 messageByte <<= remainderBits;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
+                if(ftell(pMessageFile) > (messageSize - 3))
                     printf("MesssageByte << remainderBits = %u\n", messageByte);
                 //set bits to msg bits
-                coverByte |= messageByte;
+                lumIndex |= messageByte;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("CoverByte | messageByte = %u\n", coverByte);
+                if(ftell(pMessageFile) > (messageSize - 3))
+                    printf("lumIndex | messageByte = %u\n", lumIndex);
                 //read new msg byte
                 fread(&messageByte, 1, 1, pMessageFile);
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
+                if(ftell(pMessageFile) > (messageSize - 3))
                     printf("New MessageByte = %u\n", messageByte);
-                //new bitmask to retrieve remaining bits for coverByte
+                //new bitmask to retrieve remaining bits for lumIndex
                 bitMask = GetBitMask(remainderBits);
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
+                if(ftell(pMessageFile) > (messageSize - 3))
                     printf("Bitmask4M = %u\n", bitMask);
                 //tempByte will contain bitmask we need
                 tempByte = messageByte & bitMask;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
+                if(ftell(pMessageFile) > (messageSize - 3))
                     printf("tempByte = %u\n", tempByte);
-                //set remaining bits in coverByte
-                coverByte |= tempByte;
+                //set remaining bits in lumIndex
+                lumIndex |= tempByte;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("CoverByte | tempByte = %u\n", coverByte);
-                //write coverByte to outfile
-                fwrite(&coverByte, 1, 1, pOutputFile);
+                if(ftell(pMessageFile) > (messageSize - 3))
+                    printf("lumIndex | tempByte = %u\n", lumIndex);
+                //write originalIndex of lumIndex to outfile
+                fwrite(&palette[lumIndex].originalIndex, 1, 1, pOutputFile);
+                fflush(pOutputFile);
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("Writing %u to outputFile\n", coverByte);
+                if(ftell(pMessageFile) > (messageSize - 3))
+                    printf("Writing %u with original index of %u to outputFile\n", lumIndex, palette[lumIndex].originalIndex);
                 //shift message byte to write pos
                 messageByte >>= remainderBits;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
+                if(ftell(pMessageFile) > (messageSize - 3))
                     printf("MesssageByte >> remainderBits = %u\n", messageByte);
-                //set messageBitCounter to correct number
-                messageBitCounter = remainderBits;
+                //set bitCounter to correct number
+                bitCounter = remainderBits;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("MBC = %d\n", messageBitCounter);
+                if(ftell(pMessageFile) > (messageSize - 3))
+                    printf("MBC = %d\n", bitCounter);
 
-            } else if((messageBitCounter + bitsToHide) <= 8) {
+            } else if((bitCounter + bitsToHide) <= 8) {
                 
-                if(messageBitCounter == 0) {
+                if(bitCounter == 0) {
                     fread(&messageByte, 1, 1, pMessageFile);
 
-                //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("New MessageByte = %u\n", messageByte);
+                    //TODO remove
+                    if(ftell(pMessageFile) > (messageSize - 3))
+                        printf("New MessageByte = %u\n", messageByte);
 
                 }
 
-                messageBitCounter += bitsToHide;
-                    
+                bitCounter += bitsToHide;
+                
+                tempByte = 0;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("MBC = %d\n", messageBitCounter);
+                if(ftell(pMessageFile) > (messageSize - 3))
+                    printf("MBC = %d\n", bitCounter);
                 //bitMask for lsbwipe
                 bitMask = ~GetBitMask(bitsToHide);
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("Bitmask4C = %u\n", bitMask);
-                //wipe lsbs of coverByte
-                coverByte &= bitMask;
+                if(ftell(pMessageFile) > (messageSize - 3))
+                    printf("Bitmask4LI = %u\n", bitMask);
+                //wipe lsbs of lumIndex
+                lumIndex &= bitMask;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("CoverByte & bitMask = %u\n", coverByte);
+                if(ftell(pMessageFile) > (messageSize - 3))
+                    printf("lumIndex & bitMask = %u\n", lumIndex);
                 //bitMask for desired msgBytes
                 bitMask = GetBitMask(bitsToHide);
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
+                if(ftell(pMessageFile) > (messageSize - 3))
                     printf("Bitmask4M = %u\n", bitMask);
                 //tempByte will contain bitmask we need
                 tempByte = messageByte & bitMask;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
+                if(ftell(pMessageFile) > (messageSize - 3))
                     printf("tempByte = %u\n", tempByte);
-                //set bits of coverByte
-                coverByte |= tempByte;
+                //set bits of lumIndex
+                lumIndex |= tempByte;
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("CoverByte | tempByte = %u\n", coverByte);
+                if(ftell(pMessageFile) > (messageSize - 3))
+                    printf("lumIndex | tempByte = %u\n", lumIndex);
                 //write to outfile
-                fwrite(&coverByte, 1, 1, pOutputFile);
+                fwrite(&palette[lumIndex].originalIndex, 1, 1, pOutputFile);
+                fflush(pOutputFile);
                 //TODO remove
-                if(ftell(pMessageFile) < 9)
-                    printf("Writing %u to outputFile\n", coverByte);
+                if(ftell(pMessageFile) > (messageSize - 3))
+                    printf("Writing %u with original index of %u to outputFile\n", lumIndex, palette[lumIndex].originalIndex);
                 messageByte >>= bitsToHide;
-                if(ftell(pMessageFile) < 9)
+                if(ftell(pMessageFile) > (messageSize - 3))
                     printf("MessageByte >> bitsToHide = %u\n", messageByte);
 
-                if(messageBitCounter == 8) {
-                       
-                    messageBitCounter = 0;
+                if(bitCounter == 8) {
+                    
+                    bitCounter = 0;
                         
                 }
 
             }
 
         }  else {
+            
+            remainderBits = bitCounter % 8;
+            
+            if(remainderBits > 0) {
+                
+                printf("-------------------HERE!!-------------\n");
+                fread(&coverByte, 1, 1, pCoverFile);
+                lumIndex = GetLuminanceIndex(palette, coverByte);
+        
+                printf("New CoverByte IN EMBED LOOP= %u\n", coverByte);
+                printf("New lumIndex IN EMBED LOOP= %u\n", lumIndex);
+        
+                bitCounter += bitsToHide;
+                //TODO remove
+                printf("MBC = %d\n", bitCounter);
+                remainderBits = bitCounter % 8;
+                //TODO remove
+                printf("remainderBits = %d\n", remainderBits);
+                bitMask = ~GetBitMask(bitsToHide);
+                //TODO remove
+                printf("Bitmask4LI = %u\n", bitMask);
+                lumIndex &= bitMask;
+                //TODO remove
+                printf("lumIndex & bitMask = %u\n", lumIndex);
+                bitMask = GetBitMask(bitsToHide);
+                //TODO remove
+                printf("Bitmask4M = %u\n", bitMask);
+                messageByte <<= remainderBits;
+                printf("MesssageByte << remainderBits = %u\n", messageByte);
+                tempByte = messageByte & bitMask;
+                printf("tempByte = %u\n", tempByte);
+                lumIndex |= tempByte;
+                printf("lumIndex | tempByte = %u\n", lumIndex);
+                fwrite(&palette[lumIndex].originalIndex, 1, 1, pOutputFile);
+                fflush(pOutputFile);
+                printf("Writing %u with original index of %u to outputFile\n", lumIndex, palette[lumIndex].originalIndex);
+                
+                bitCounter = 8;
+
+            }
+
+            if(ftell(pCoverFile) == messageSize)
+            {
+                printf("FTELL %ld\tMessageSize %d\tBitCounter %d\n", ftell(pMessageFile), messageSize, bitCounter);
+                printf("MessageByte %u\tCoverByte %u\n", messageByte, coverByte);
+            }
+
             fwrite(&coverByte, 1, 1, pOutputFile);
+            fflush(pOutputFile);
         }
        
     }// END WHILE
+
+    FreeHide();
 
 }
 
@@ -197,6 +266,7 @@ void LoadPaletteHeader() {
     fseek(pCoverFile, 0, SEEK_SET);
     fread(header, 1, sizeof(header), pCoverFile);
     fwrite(header, 1, sizeof(header), pOutputFile);
+    fflush(pOutputFile);
 
     fseek(pCoverFile, 18, SEEK_SET);
     fread(&coverWidth, 1, sizeof(coverWidth), pCoverFile);
@@ -219,41 +289,18 @@ void LoadPaletteHeader() {
     }
 
     paletteSize = pow(2, bitsPerPixel);
-    unsigned char paletteData[4];
+    
 
     //TODO remove
     printf("Palette Size = %d\n", paletteSize * 4);
 
     fseek(pCoverFile, 54, SEEK_SET);
 
-    palette = (PaletteEntry*) malloc(sizeof(PaletteEntry) * paletteSize);
-
-    int index = 0;
-
-    //TODO: check for ALL -1 if needed or not in ALL fread/fwrite
-    while(((ftell(pCoverFile)) < (54 + (paletteSize * 4))) && fread(paletteData, 1, sizeof(paletteData), pCoverFile)) {
-
-        palette[index].B = paletteData[0];
-        palette[index].G = paletteData[1];
-        palette[index].R = paletteData[2];
-        palette[index].luminosity = CalculateLuminosity(palette[index].R, palette[index].G, palette[index].B);
-        //TODO: remove if palette order is not changed
-        palette[index].originalIndex = index;
-
-        //TODO: remove
-        printf("Palette Index %d R = %u\n", index, palette[index].R);
-        printf("Palette Index %d G = %u\n", index, palette[index].G);
-        printf("Palette Index %d B = %u\n", index, palette[index].B);
-        printf("Palette Index %d luminosity = %u\n", index, palette[index].luminosity);
-
-
-        fwrite(paletteData, 1, sizeof(paletteData), pOutputFile);
-        index++;
-    }
+    palette = CopyPalette(paletteSize, pCoverFile, pOutputFile);
 
 }
 
-void FreeAll() {
+void FreeHide() {
 
     free(pCoverFile);
     free(pMessageFile);
@@ -265,62 +312,88 @@ void FreeAll() {
 void EmbedLengthOfFile(int bitsToHide) {
 
     int bitCounter = 0;
-    unsigned char coverByte, messageByte, tempByte, bitMask;
+    unsigned char coverByte, messageByte, lumIndex, tempByte, bitMask;
+    unsigned int messageSizeCopy = messageSize;
 
-    printf("-----------STARTING LENGTH EMBED-----------");
-    printf("Message Size = %u\n", messageSize);
+    printf("-----------STARTING LENGTH EMBED-----------\n");
+    printf("Message Size = %u\n", messageSizeCopy);
 
-    while(bitCounter <= (sizeof(messageSize) * 8)) {
+    while((bitCounter + bitsToHide) < (sizeof(messageSizeCopy) * 8)) {
 
-        //read in new byte
-        fread(&coverByte, 1, 1, pCoverFile);
-        //TODO remove
-        printf("New CoverByte = %u\n", coverByte);
-        //bitmask
-        bitMask = ~GetBitMask(bitsToHide);
-        //TODO remove
-        printf("Bitmask4C = %u\n", bitMask);
-        coverByte &= bitMask;
-        //TODO remove
-        printf("CoverByte & bitMask = %u\n", coverByte);
-        tempByte = messageSize & bitMask;
-        //TODO remove
-        printf("tempByte = %u\n", tempByte);
-        coverByte |= tempByte;
-        //TODO remove
-        printf("CoverByte | tempByte = %u\n", coverByte);
-        messageSize >>= bitsToHide;
-        //TODO remove
-        printf("Message Size >> bitsToHide = %u\n", messageSize);
         bitCounter += bitsToHide;
         //TODO remove
         printf("bitCounter = %d\n", bitCounter);
+        //read in new byte
+        fread(&coverByte, 1, 1, pCoverFile);
+        //TODO remove
+        printf("New CoverByte IN ELOF = %u\n", coverByte);
+        //get lumIndex of coverByte
+        lumIndex = GetLuminanceIndex(palette, coverByte);
+        //TODO remove
+        printf("New lumIndex IN ELOF = %u\n", lumIndex);
+        //bitmask
+        bitMask = ~GetBitMask(bitsToHide);
+        //TODO remove
+        printf("Bitmask4LI = %u\n", bitMask);
+        lumIndex &= bitMask;
+        //TODO remove
+        printf("lumIndex & bitMask = %u\n", lumIndex);
+        bitMask = GetBitMask(bitsToHide);
+        //TODO remove
+        printf("Bitmask4M = %u\n", bitMask);
+        tempByte = messageSizeCopy & bitMask;
+        //TODO remove
+        printf("tempByte = %u\n", tempByte);
+        lumIndex |= tempByte;
+        //TODO remove
+        printf("lumIndex | tempByte = %u\n", lumIndex);
+        fwrite(&palette[lumIndex].originalIndex, 1, 1, pOutputFile);
+        fflush(pOutputFile);
+        //TODO remove
+        printf("Writing %u with original index of %u to outputFile\n", lumIndex, palette[lumIndex].originalIndex);
+        messageSizeCopy >>= bitsToHide;
+        //TODO remove
+        printf("Message Size >> bitsToHide = %u\n", messageSizeCopy);
+        
 
     }
 
     //if remainder exists shift over remainder and get new bitmask
+    bitCounter += bitsToHide;
 
-    if(bitCounter % 32 > 0) {
+    if(bitCounter % (sizeof(messageSizeCopy) * 8) > 0) {
 
         //TODO remove
         printf("REMAINDER LEFT IN LENGTH!\n");
-        messageSize <<= (bitCounter % 32);
+        //read in new byte
+        fread(&coverByte, 1, 1, pCoverFile);
         //TODO remove
-        printf("Message Size << remainder = %u\n", messageSize);
-        coverByte |= messageSize;
+        printf("New CoverByte IN ELOFR = %u\n", coverByte);
+        //get lumIndex of coverByte
+        lumIndex = GetLuminanceIndex(palette, coverByte);
         //TODO remove
-        printf("CoverByte | messageSize = %u\n", coverByte);
-        fwrite(&coverByte, 1, 1, pOutputFile);
+        printf("New lumIndex IN ELOFR = %u\n", lumIndex);
+        //bitmask
+        bitMask = ~GetBitMask(bitsToHide);
         //TODO remove
-        printf("Writing %u to outfile!\n", coverByte);
+        printf("Bitmask4LI = %u\n", bitMask);
+        //wipe lsbs of lumIndex
+        lumIndex &= bitMask;
+        //shift bits
+        messageSizeCopy <<= (bitCounter % (sizeof(messageSizeCopy)* 8));
+        //TODO remove
+        printf("Message Size << remainder = %u\n", messageSizeCopy);
+        lumIndex |= messageSizeCopy;
+        //TODO remove
+        printf("lumIndex | messageSizeCopy = %u\n", lumIndex);
+        fwrite(&palette[lumIndex].originalIndex, 1, 1, pOutputFile);
+        fflush(pOutputFile);
+        //TODO remove
+        printf("Writing %u with original index of %u to outputFile\n", lumIndex, palette[lumIndex].originalIndex);
 
     }
 
-}
-
-unsigned char CalculateLuminosity(unsigned char R, unsigned char G, unsigned char B) {
-
-      return (unsigned char) round((R * 0.299) + (G * 0.587) + (B * 0.114));
+    printf("-----------ENDING LENGTH EMBED-----------\n");
 
 }
 
@@ -333,14 +406,14 @@ void CoverLimitCheck(int bits) {
 
   //TODO remove
   printf("Minimum = %lf\n", round(minimum));
-  printf("Storage Cap = %u\n", coverSize - 1078);
+  printf("Storage Cap = %u\n", (coverSize - 1078 - (unsigned int) ceil((sizeof(messageSize)*8)/bits)));
 
-  if(round(minimum) > (coverSize - 1078)) {
+  if(round(minimum) > (coverSize - 1078 - (unsigned int) ceil((sizeof(messageSize)*8)/bits))) {
 
-    printf("Warning! The cover file is not big enough to contain the entire message file. If you want to proceed type any key. If not enter N.\n");
+    printf("Warning! The cover file is not big enough to contain the entire message file. If you want to exit enter N.\n");
     scanf("%c", &userInput);
 
-    if(userInput == 'N')
+    if(userInput == 'n' || userInput == 'N')
         exit(0);
   }
 

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "Hide.h"
+#include "Extract.h"
 
 char stegoFileName[260], coverFileName[260], messageFileName[260], outputFileName[260], bits;
 
@@ -51,6 +52,12 @@ void main(int argc, char *argv[]) {
         }
 
         bits = argv[7][0];
+
+        if(atoi(&bits) < 1 || atoi(&bits) > 7) {
+            printf("Invalid number! Please use -b <number> using a number greater than 0 and less than 8. Use the -help command if you need assistance using the program.\n");
+            exit(1);
+        }
+
         //TODO remove
         printf("Bits to hide = %c\n", bits);
 
@@ -70,10 +77,7 @@ void main(int argc, char *argv[]) {
         printf("OutputFile = %s\n", outputFileName);
 
         //EMBED / OUTPUT PROCEDURE
-
         HideProcedure(messageFileName, coverFileName, outputFileName, atoi(&bits));
-
-        //CLOSE PROCEDURE
 
         exit(0);
 
@@ -106,6 +110,10 @@ void main(int argc, char *argv[]) {
         }
 
         bits = argv[5][0];
+        if(atoi(&bits) < 1 || atoi(&bits) > 7) {
+            printf("Invalid number! Please use -b <number> using a number greater than 0 and less than 8. Use the -help command if you need assistance using the program.\n");
+            exit(1);
+        }
         //TODO remove
         printf("Bits to hide = %c\n", bits);
         
@@ -127,7 +135,7 @@ void main(int argc, char *argv[]) {
         printf("outputFile = %s\n", outputFileName);
 
         //EXTRACT PROCEDURE
-        //CLOSE PROCEDURE
+        ExtractProcedure(stegoFileName, atoi(&bits), outputFileName);
 
         exit(0);
 
