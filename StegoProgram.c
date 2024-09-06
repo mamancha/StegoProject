@@ -1,3 +1,14 @@
+/*
+
+Author: Mark Mancha
+Description: This program uses the steganographic technique Nearest Luminance to embed a secret
+message file into a cover file. It does this by sorting the palette by increasing luminance.
+Then the message file is broken down into smaller parts so it can be embedded into the 
+Least Significant Bits of the index into the sorted palette.
+Data: 09/06/24
+
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -9,11 +20,11 @@ char stegoFileName[260], coverFileName[260], messageFileName[260], outputFileNam
 void main(int argc, char *argv[]) {
 
 
-    for(int i = 0; i < argc; i++) {
+    /* for(int i = 0; i < argc; i++) {
         printf("%s\t%d\n", argv[i], i);
-    }
+    } */
 
-    printf("argc = %d\n", argc);
+    //printf("argc = %d\n", argc);
 
     //StegoProgram.exe -hide -m (img, txt, random, etc.)"filepath" -c "filepath" -b number (optional) -o "filename" 
     if(strcmp(argv[1], "-hide") == 0) {
@@ -27,15 +38,14 @@ void main(int argc, char *argv[]) {
         }
 
         if(strcmp(argv[2], "-m") != 0) {
-            printf("Use -m and type the name of the message file or type \"random\" to hide a random number into the cover. Use the -help command if you need assistance using the program.\n");
+            printf("Use -m and type the Path of the message file. Use the -help command if you need assistance using the program.\n");
             exit(1);
         }
 
-        //CAN BE RANDOM
         strcpy(messageFileName, argv[3]);
 
         //TODO remove
-        printf("MessageFile = %s\n", messageFileName);
+        //printf("MessageFile = %s\n", messageFileName);
 
         if(strcmp(argv[4], "-c") != 0) {
             printf("Use -c and type the name of a valid cover file. Use the -help command if you need assistance using the program.\n");
@@ -43,8 +53,9 @@ void main(int argc, char *argv[]) {
         }
 
         strcpy(coverFileName, argv[5]);
+        
         //TODO remove
-        printf("CoverFile = %s\n", coverFileName);
+        //printf("CoverFile = %s\n", coverFileName);
 
         if(strcmp(argv[6], "-b") != 0) {
             printf("Use -b and type the desired number of bits to embed into the Least Significant Bits of the cover file. Use the -help command if you need assistance using the program.\n");
@@ -59,7 +70,7 @@ void main(int argc, char *argv[]) {
         }
 
         //TODO remove
-        printf("Bits to hide = %c\n", bits);
+        //printf("Bits to hide = %c\n", bits);
 
         if(argc == 9 || argc == 10) {
 
@@ -74,7 +85,7 @@ void main(int argc, char *argv[]) {
             strcpy(outputFileName, "StegoImg.bmp");
 
         //TODO remove
-        printf("OutputFile = %s\n", outputFileName);
+        //printf("OutputFile = %s\n", outputFileName);
 
         //EMBED / OUTPUT PROCEDURE
         HideProcedure(messageFileName, coverFileName, outputFileName, atoi(&bits));
@@ -102,7 +113,7 @@ void main(int argc, char *argv[]) {
         strcpy(stegoFileName, argv[3]);
 
         //TODO remove
-        printf("stegoFile = %s\n", stegoFileName);
+        //printf("stegoFile = %s\n", stegoFileName);
 
         if(strcmp(argv[4], "-b") != 0) {
             printf("Use -b and type the desired number of bits to embed into the Least Significant Bits of the cover file. Use the -help command if you need assistance using the program.\n");
@@ -115,13 +126,13 @@ void main(int argc, char *argv[]) {
             exit(1);
         }
         //TODO remove
-        printf("Bits to hide = %c\n", bits);
+        //printf("Bits to hide = %c\n", bits);
         
         //edit all number values
         if(argc == 7 || argc == 8) {
 
             if(strcmp(argv[6], "-o") != 0 || argc == 7) {
-                printf("Use -o and type the desired name of the output file. Optional. Use the -help command if you need assistance using the program.\n");
+                printf("Use -o and type the name of the output file with the desired file extension. Optional. Use the -help command if you need assistance using the program.\n");
                 exit(1);
             }
 
@@ -132,7 +143,7 @@ void main(int argc, char *argv[]) {
         }
 
         //TODO remove
-        printf("outputFile = %s\n", outputFileName);
+        //printf("outputFile = %s\n", outputFileName);
 
         //EXTRACT PROCEDURE
         ExtractProcedure(stegoFileName, atoi(&bits), outputFileName);
@@ -145,8 +156,8 @@ void main(int argc, char *argv[]) {
     else if(strcmp(argv[1], "-help") == 0) {
 
         printf("Directions for hide: StegoProgram.exe -hide -m \"filename\" -c \"filename\" -b bitsToHide (optional) -o \"desired output filename\"\n");
-        printf("Directions for extract: StegoProgram.exe -extract -s \"stegofile\"\n");
-        printf("If you are extracting and do not enter a filename with an extension, the messagefile will be changed to \"filename.out\". Change the extension to the desired format to open the file.");
+        printf("Directions for extract: StegoProgram.exe -extract -s \"stegofile\" -b bitsToExtract\n");
+        printf("If you are extracting and do not provide an output file name, the file will be saved as \"MessageFile.out\". Change the extension to the desired format to open the file.");
         exit(1);
 
     } //END else if

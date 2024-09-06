@@ -18,7 +18,7 @@ FILE* FileRead(char *fileName, unsigned int *fileSize) {
         exit(1);
     } else {
         //TODO remove
-        printf("File  %s is valid and has been opened.\n", fileName);
+        //printf("File  %s is valid and has been opened.\n", fileName);
     }
 
     fseek(pFile, 0, SEEK_END);
@@ -38,7 +38,7 @@ FILE* FileWrite(char *fileName) {
         exit(1);
     } else {
         //TODO REMOVE
-        printf("Successfully opened file %s for writing\n", fileName);
+        //printf("Successfully opened file %s for writing\n", fileName);
     }
 
     return pFile;
@@ -137,13 +137,13 @@ void BubbleSortLuminance(PaletteEntry *originalPalette) {
 
     for(i = 0; i < n; i++) {
         //TODO: remove
-        printf("-------------------------------------\n");
+        /* printf("-------------------------------------\n");
         printf("lumIndex %d\tOriginal Index %d\n", i, originalPalette[i].originalIndex);
         printf("R = %u\n", originalPalette[i].R);
         printf("G = %u\n", originalPalette[i].G);
         printf("B = %u\n", originalPalette[i].B);
         printf("luminosity = %u\n",originalPalette[i].luminosity);
-        printf("-------------------------------------\n");
+        printf("-------------------------------------\n"); */
     }
 
 }
@@ -166,10 +166,10 @@ PaletteEntry* CopyPalette(short paletteSize, FILE *pCoverFile, FILE *pOutputFile
         palette[index].originalIndex = index;
 
         //TODO: remove
-        printf("Palette Index %d R = %u\n", index, palette[index].R);
+        /* printf("Palette Index %d R = %u\n", index, palette[index].R);
         printf("Palette Index %d G = %u\n", index, palette[index].G);
         printf("Palette Index %d B = %u\n", index, palette[index].B);
-        printf("Palette Index %d luminosity = %u\n", index, palette[index].luminosity);
+        printf("Palette Index %d luminosity = %u\n", index, palette[index].luminosity); */
 
 
         fwrite(paletteData, 1, sizeof(paletteData), pOutputFile);
@@ -198,10 +198,10 @@ PaletteEntry* CachePalette(short paletteSize, FILE *pCoverFile) {
         palette[index].originalIndex = index;
 
         //TODO: remove
-        printf("Palette Index %d R = %u\n", index, palette[index].R);
+        /* printf("Palette Index %d R = %u\n", index, palette[index].R);
         printf("Palette Index %d G = %u\n", index, palette[index].G);
         printf("Palette Index %d B = %u\n", index, palette[index].B);
-        printf("Palette Index %d luminosity = %u\n", index, palette[index].luminosity);
+        printf("Palette Index %d luminosity = %u\n", index, palette[index].luminosity); */
 
         index++;
     }
