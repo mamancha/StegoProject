@@ -1,5 +1,7 @@
 #include "Tools.h"
 
+//Parameters: Two by
+//Verifies if the file is in BMP format. Returns a boolean.
 bool VerifyBMP(unsigned char *fileData) {
 
     if(fileData[0] == 'B' && fileData[1] == 'M')
@@ -9,6 +11,8 @@ bool VerifyBMP(unsigned char *fileData) {
 
 }
 
+//Parameters: String, unsigned int pointer
+//Takes the given file name and opens it for binary reading. Also saves the size of the file to the unsigned int. Returns the file pointer.
 FILE* FileRead(char *fileName, unsigned int *fileSize) {
 
     FILE *pFile = fopen(fileName, "rb");
@@ -16,9 +20,6 @@ FILE* FileRead(char *fileName, unsigned int *fileSize) {
     if(pFile == NULL) {
         printf("Error. Could not open file <%s>. Please enter a valid file.\n", fileName);
         exit(1);
-    } else {
-        //TODO remove
-        //printf("File  %s is valid and has been opened.\n", fileName);
     }
 
     fseek(pFile, 0, SEEK_END);
@@ -29,6 +30,8 @@ FILE* FileRead(char *fileName, unsigned int *fileSize) {
 
 }
 
+//Parameters: String
+//Takes the given file name and opens it for binary writing. Returns the file pointer.
 FILE* FileWrite(char *fileName) {
 
     FILE *pFile = fopen(fileName, "wb");
@@ -36,25 +39,24 @@ FILE* FileWrite(char *fileName) {
     if(pFile == NULL) {
         printf("Error. Could not open file <%s>.\n", fileName);
         exit(1);
-    } else {
-        //TODO REMOVE
-        //printf("Successfully opened file %s for writing\n", fileName);
     }
-
+    
     return pFile;
 
 }
 
+//Parameters: unsigned int
+//Checks to see if a file requires padding. Returns a boolean.
 bool PaddingCheck(unsigned int width) {
 
     if(width % 4 == 0)
         return false;
 
     return true;
-
-
 }
 
+//Parameters: int
+//Given a number, returns a matching byte mask
 unsigned char GetBitMask(int bits) {
 
     unsigned char byte;
@@ -86,12 +88,16 @@ unsigned char GetBitMask(int bits) {
 
 }
 
+//Paramets: 3 unsigned char
+//Given 3 color values represented in an unsigned char, return the luminosity.
 unsigned char CalculateLuminosity(unsigned char R, unsigned char G, unsigned char B) {
 
       return (unsigned char) round((R * 0.299) + (G * 0.587) + (B * 0.114));
 
 }
 
+//Parameters: PaletteEntry, unsigned char
+//Searches through the given PaletteEntry array and returns the index that has the same originalIndex provided.
 unsigned char GetLuminanceIndex(PaletteEntry *palette, unsigned char originalIndex) {
 
     unsigned char i;
@@ -108,6 +114,8 @@ unsigned char GetLuminanceIndex(PaletteEntry *palette, unsigned char originalInd
 
 }
 
+//Parameter: PaletteEntry
+//Given a PaletteEntry array, sort it based on increasing luminance
 void BubbleSortLuminance(PaletteEntry *originalPalette) {
     
     int i, j;
@@ -134,20 +142,10 @@ void BubbleSortLuminance(PaletteEntry *originalPalette) {
         if (swapped == 0)
             break;
     }
-
-    for(i = 0; i < n; i++) {
-        //TODO: remove
-        /* printf("-------------------------------------\n");
-        printf("lumIndex %d\tOriginal Index %d\n", i, originalPalette[i].originalIndex);
-        printf("R = %u\n", originalPalette[i].R);
-        printf("G = %u\n", originalPalette[i].G);
-        printf("B = %u\n", originalPalette[i].B);
-        printf("luminosity = %u\n",originalPalette[i].luminosity);
-        printf("-------------------------------------\n"); */
-    }
-
 }
 
+//Parameters: short, 2 FILE*, 
+//Locates the palette in the first file and copies it to the second file
 PaletteEntry* CopyPalette(short paletteSize, FILE *pCoverFile, FILE *pOutputFile) {
 
     PaletteEntry *palette;
@@ -156,7 +154,6 @@ PaletteEntry* CopyPalette(short paletteSize, FILE *pCoverFile, FILE *pOutputFile
 
     palette = (PaletteEntry*) malloc(sizeof(PaletteEntry) * paletteSize);
 
-    //TODO: check for ALL -1 if needed or not in ALL fread/fwrite
     while(((ftell(pCoverFile)) < (54 + (paletteSize * 4))) && fread(paletteData, 1, sizeof(paletteData), pCoverFile)) {
 
         palette[index].B = paletteData[0];
@@ -164,13 +161,6 @@ PaletteEntry* CopyPalette(short paletteSize, FILE *pCoverFile, FILE *pOutputFile
         palette[index].R = paletteData[2];
         palette[index].luminosity = CalculateLuminosity(palette[index].R, palette[index].G, palette[index].B);
         palette[index].originalIndex = index;
-
-        //TODO: remove
-        /* printf("Palette Index %d R = %u\n", index, palette[index].R);
-        printf("Palette Index %d G = %u\n", index, palette[index].G);
-        printf("Palette Index %d B = %u\n", index, palette[index].B);
-        printf("Palette Index %d luminosity = %u\n", index, palette[index].luminosity); */
-
 
         fwrite(paletteData, 1, sizeof(paletteData), pOutputFile);
         index++;
@@ -180,6 +170,8 @@ PaletteEntry* CopyPalette(short paletteSize, FILE *pCoverFile, FILE *pOutputFile
 
 }
 
+//Parameters: short, FILE*
+//Finds the palette in the file and saves it. Returns the FILE pointer.
 PaletteEntry* CachePalette(short paletteSize, FILE *pCoverFile) {
 
     PaletteEntry *palette;
