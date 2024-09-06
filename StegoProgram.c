@@ -17,16 +17,13 @@ Data: 09/06/24
 
 char stegoFileName[260], coverFileName[260], messageFileName[260], outputFileName[260], bits;
 
+//This is the main function that controls the program. It takes in user input from the terminal and verifies the vailidity of the data.
+//There two different commands -hide and -extract
 void main(int argc, char *argv[]) {
 
-
-    /* for(int i = 0; i < argc; i++) {
-        printf("%s\t%d\n", argv[i], i);
-    } */
-
-    //printf("argc = %d\n", argc);
-
     //StegoProgram.exe -hide -m (img, txt, random, etc.)"filepath" -c "filepath" -b number (optional) -o "filename" 
+    
+    //If statement for hide command
     if(strcmp(argv[1], "-hide") == 0) {
 
         if(argc < 8) {
@@ -44,18 +41,12 @@ void main(int argc, char *argv[]) {
 
         strcpy(messageFileName, argv[3]);
 
-        //TODO remove
-        //printf("MessageFile = %s\n", messageFileName);
-
         if(strcmp(argv[4], "-c") != 0) {
             printf("Use -c and type the name of a valid cover file. Use the -help command if you need assistance using the program.\n");
             exit(1);
         }
 
         strcpy(coverFileName, argv[5]);
-        
-        //TODO remove
-        //printf("CoverFile = %s\n", coverFileName);
 
         if(strcmp(argv[6], "-b") != 0) {
             printf("Use -b and type the desired number of bits to embed into the Least Significant Bits of the cover file. Use the -help command if you need assistance using the program.\n");
@@ -69,9 +60,6 @@ void main(int argc, char *argv[]) {
             exit(1);
         }
 
-        //TODO remove
-        //printf("Bits to hide = %c\n", bits);
-
         if(argc == 9 || argc == 10) {
 
             if(strcmp(argv[8], "-o") != 0 || argc == 9) {
@@ -84,10 +72,7 @@ void main(int argc, char *argv[]) {
         } else
             strcpy(outputFileName, "StegoImg.bmp");
 
-        //TODO remove
-        //printf("OutputFile = %s\n", outputFileName);
-
-        //EMBED / OUTPUT PROCEDURE
+        //EMBED PROCEDURE
         HideProcedure(messageFileName, coverFileName, outputFileName, atoi(&bits));
 
         exit(0);
@@ -95,6 +80,8 @@ void main(int argc, char *argv[]) {
     } //END if 
     
     //StegoProgram.exe -extract -s "filepath" (optional) -b number -o "filename"
+
+    //If statement for extract command
     else if(strcmp(argv[1], "-extract") == 0) {
 
         if(argc < 6) {
@@ -112,9 +99,6 @@ void main(int argc, char *argv[]) {
 
         strcpy(stegoFileName, argv[3]);
 
-        //TODO remove
-        //printf("stegoFile = %s\n", stegoFileName);
-
         if(strcmp(argv[4], "-b") != 0) {
             printf("Use -b and type the desired number of bits to embed into the Least Significant Bits of the cover file. Use the -help command if you need assistance using the program.\n");
             exit(1);
@@ -125,10 +109,7 @@ void main(int argc, char *argv[]) {
             printf("Invalid number! Please use -b <number> using a number greater than 0 and less than 8. Use the -help command if you need assistance using the program.\n");
             exit(1);
         }
-        //TODO remove
-        //printf("Bits to hide = %c\n", bits);
         
-        //edit all number values
         if(argc == 7 || argc == 8) {
 
             if(strcmp(argv[6], "-o") != 0 || argc == 7) {
@@ -142,9 +123,6 @@ void main(int argc, char *argv[]) {
             strcpy(outputFileName, "MessageFile.out");
         }
 
-        //TODO remove
-        //printf("outputFile = %s\n", outputFileName);
-
         //EXTRACT PROCEDURE
         ExtractProcedure(stegoFileName, atoi(&bits), outputFileName);
 
@@ -153,6 +131,8 @@ void main(int argc, char *argv[]) {
     } //END else if
 
     //StegoProgram.exe -help 
+
+    //If statement for help command
     else if(strcmp(argv[1], "-help") == 0) {
 
         printf("Directions for hide: StegoProgram.exe -hide -m \"filename\" -c \"filename\" -b bitsToHide (optional) -o \"desired output filename\"\n");
@@ -162,6 +142,7 @@ void main(int argc, char *argv[]) {
 
     } //END else if
 
+    //If statement for any other input
     else {
 
         printf("Invalid input. Type -help if you need assistance using the program.\n");
