@@ -180,7 +180,6 @@ PaletteEntry* CachePalette(short paletteSize, FILE *pCoverFile) {
 
     palette = (PaletteEntry*) malloc(sizeof(PaletteEntry) * paletteSize);
 
-    //TODO: check for ALL -1 if needed or not in ALL fread/fwrite
     while(((ftell(pCoverFile)) < (54 + (paletteSize * 4))) && fread(paletteData, 1, sizeof(paletteData), pCoverFile)) {
 
         palette[index].B = paletteData[0];
@@ -188,12 +187,6 @@ PaletteEntry* CachePalette(short paletteSize, FILE *pCoverFile) {
         palette[index].R = paletteData[2];
         palette[index].luminosity = CalculateLuminosity(palette[index].R, palette[index].G, palette[index].B);
         palette[index].originalIndex = index;
-
-        //TODO: remove
-        /* printf("Palette Index %d R = %u\n", index, palette[index].R);
-        printf("Palette Index %d G = %u\n", index, palette[index].G);
-        printf("Palette Index %d B = %u\n", index, palette[index].B);
-        printf("Palette Index %d luminosity = %u\n", index, palette[index].luminosity); */
 
         index++;
     }
