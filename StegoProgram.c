@@ -135,9 +135,9 @@ void main(int argc, char *argv[]) {
     //If statement for help command
     else if(strcmp(argv[1], "-help") == 0) {
 
-        printf("Directions for hide: StegoProgram.exe -hide -m \"filename\" -c \"filename\" -b bitsToHide (optional) -o \"desired output filename\"\n");
+        printf("\nDirections for hide: StegoProgram.exe -hide -m \"filename\" -c \"filename\" -b bitsToHide (optional) -o \"desired output filename\"\n");
         printf("Directions for extract: StegoProgram.exe -extract -s \"stegofile\" -b bitsToExtract\n");
-        printf("If you are extracting and do not provide an output file name, the file will be saved as \"MessageFile.out\". Change the extension to the desired format to open the file.");
+        printf("If you are extracting and do not provide an output file name, the file will be saved as \"MessageFile.out\". Change the extension to the desired format to open the file.\n\n");
         exit(1);
 
     } //END else if
