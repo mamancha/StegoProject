@@ -22,9 +22,6 @@ void HideProcedure(char *messageFileName, char *coverFileName, char *outputFileN
     //Opens the message file for reading and returns the file pointer. Also saves the size of the file.
     pMessageFile = FileRead(messageFileName, &messageSize);
 
-    //Checks if the cover file is big enough to hold the message
-    CoverLimitCheck(bitsToHide);
-
     //Opens the output file for writing
     pOutputFile = FileWrite(outputFileName);
 
@@ -41,7 +38,7 @@ void HideProcedure(char *messageFileName, char *coverFileName, char *outputFileN
     unsigned char coverByte, messageByte, lumIndex, tempByte, bitMask;
     
     int cursor = ftell(pCoverFile);
-    int maxB = ceil((messageSize * 8)/(unsigned int)bitsToHide);
+    int maxB = ceil( (messageSize * 8) / (unsigned int) bitsToHide);
 
     bool padding = PaddingCheck(coverWidth);
 
@@ -49,7 +46,7 @@ void HideProcedure(char *messageFileName, char *coverFileName, char *outputFileN
     while(ftell(pCoverFile) < coverSize) {
 
         //If padding is required it does not embed and writes straight to file
-        if(padding && (ftell(pCoverFile)-cursor % (coverWidth+1) == 0)) {
+        if(padding && (ftell(pCoverFile) - cursor % (coverWidth + 1) == 0)) {
 
             int paddingNum = 4 - (coverWidth % 4);
             fread(&coverByte, 1, 1, pCoverFile);
@@ -58,7 +55,7 @@ void HideProcedure(char *messageFileName, char *coverFileName, char *outputFileN
             
         }
 
-        //
+        //read in one cover byte and find the lumIndex
         fread(&coverByte, 1, 1, pCoverFile);
         lumIndex = GetLuminanceIndex(palette, coverByte);
 
@@ -202,6 +199,8 @@ void LoadPaletteHeader() {
     fseek(pCoverFile, 28, SEEK_SET);
     fread(&bitsPerPixel, sizeof(bitsPerPixel), 1, pCoverFile);
 
+    CoverLimitCheck(bits);
+
     if(bitsPerPixel != 8) {
         printf("Error. The file you entered is not a valid cover file. Use an 8 bit BMP image.\n");
         exit(1);
@@ -289,19 +288,30 @@ void EmbedLengthOfFile(int bitsToHide) {
 
 void CoverLimitCheck(int bits) {
 
-  char userInput;
+    unsigned int uBits = (unsigned int) bits;
+    double minimum = ((messageSize*8) / uBits);
+    unsigned int bytesUsed = ceil((messageSize * 8)/ uBits);
+    unsigned int paddingNum, hidingCapacity;
+  
+    if(PaddingCheck(coverWidth)) {
 
-  unsigned int uBits = (unsigned int) bits;
-  double minimum = ((messageSize*8) / uBits);
+        paddingNum = 4 - (coverWidth % 4);
+        bytesUsed += (paddingNum * coverLength);
+        hidingCapacity = coverSize - 1078 - (paddingNum * coverLength) - (unsigned int) (ceil((sizeof(messageSize) * 8) / uBits));
+  
+    }
+    
+    hidingCapacity = coverSize - 1078 - (unsigned int) (ceil((sizeof(messageSize) * 8) / uBits));
 
-  if(round(minimum) > (coverSize - 1078 - (unsigned int) ceil((sizeof(messageSize)*8)/bits))) {
+    if(bytesUsed >= hidingCapacity) {
 
-    printf("Warning! The cover file is not big enough to contain the entire message file. Increase the number of bits to hide. If you have reached the maximum limit try either a smaller message file or a larger cover file. Use the -help command if you need assistance using the program.\n");
-    exit(0);
-    /* scanf("%c", &userInput);
+        printf("Warning! The cover file is not big enough to contain the entire message file. Increase the number of bits to hide. If you have reached the maximum limit try either a smaller message file or a larger cover file. Use the -help command if you need assistance using the program.\n");
+        exit(0);
+        
+    } else {
 
-    if(userInput == 'n' || userInput == 'N')
-        exit(0); */
-  }
+        printf("Percentage of cover file used for hiding: %%%.2f\n", (double)(bytesUsed)/(double)(coverSize - 1078));
+
+    }
 
 }
