@@ -26,7 +26,7 @@ void HideProcedure(char *messageFileName, char *coverFileName, char *outputFileN
     pOutputFile = FileWrite(outputFileName);
 
     //Loads the palette and header into the output file. Also saves the palette for reference.
-    LoadPaletteHeader();
+    LoadPaletteHeader(bitsToHide);
 
     //Sorts the palette by luminance
     BubbleSortLuminance(palette);
