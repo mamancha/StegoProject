@@ -81,6 +81,7 @@ void ExtractProcedure(char *stegoFileName, int bitsToExtract, char *outputFileNa
             bytes++;
 
             messageByte = 0;
+            
             bitMask = GetBitMask(remainderBits);
 
             lumIndex &= bitMask;
