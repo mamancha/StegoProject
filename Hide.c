@@ -182,7 +182,7 @@ void HideProcedure(char *messageFileName, char *coverFileName, char *outputFileN
 
 }
 
-void LoadPaletteHeader() {
+void LoadPaletteHeader(int bits) {
 
     unsigned char header[54];
     unsigned char bitsPerPixel;
